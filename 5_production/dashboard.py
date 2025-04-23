@@ -187,7 +187,7 @@ def create_emotions_stacked(df):
     # Customize layout
     fig.update_layout(
         barmode='stack',
-        title='Top 20 Emotions by Total Sentiment Mentions',
+        # title='Top 20 Emotions by Total Sentiment Mentions',
         xaxis_title='Affect Categories',
         yaxis_title='Percent',
         xaxis_tickangle=-45,
