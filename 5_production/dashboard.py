@@ -54,7 +54,7 @@ with st.sidebar:
     # with st.expander("About", expanded = True):
     st.title("About")
     st.write("""
-            - Data was scraped [Rollcall](https://rollcall.com/).
+            - Data was scraped from [Rollcall](https://rollcall.com/).
              """)
     
 
