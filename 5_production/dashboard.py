@@ -187,7 +187,7 @@ def create_emotions_stacked(df):
     # Customize layout
     fig.update_layout(
         barmode='stack',
-        # title='Top 20 Emotions by Total Sentiment Mentions',
+        title='Top 20 Emotions by Total Sentiment Mentions',
         xaxis_title='Affect Categories',
         yaxis_title='Percent',
         xaxis_tickangle=-45,
@@ -246,7 +246,7 @@ with top_row[0]:
 #         st.write("Please select a different date range.")
 
 with top_row[1]:
-    st.subheader("Top 20 Emotions by Total Sentiment Mentions")
+    # st.subheader("Top 20 Emotions by Total Sentiment Mentions")
     # st.write("This stacked bar chart shows the top 20 emotions by total sentiment mentions in the selected date range with data based on documents with Trump as the primary speaker.")
     if not filtered_df.empty:
         stacked = create_emotions_stacked(filtered_df)
