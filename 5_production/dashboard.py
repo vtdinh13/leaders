@@ -43,7 +43,7 @@ st.set_page_config(
 @st.cache_data
 
 def load_data():    
-    df = pd.read_parquet('/Users/vancescadinh/Documents/Projects/leaders/1_data_collection/trump_second_term_v2.parquet')
+    df = pd.read_parquet('./1_data_collection/trump_second_term_v2.parquet')
     return df
 df = load_data()
 
