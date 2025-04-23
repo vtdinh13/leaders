@@ -211,7 +211,7 @@ def create_wordcloud(df):
     filtered_text = [w for w in words.split() if w not in words_to_remove]
     ngram_freq = Counter(filtered_text)
 
-    mask = np.array(Image.open("/Users/vancescadinh/Documents/Projects/leaders/3_explore_and_feature_engineering/map.png"))
+    mask = np.array(Image.open("./3_explore_and_feature_engineering/map.png"))
     wordcloud = WordCloud(
         width=800,
         height=800,
