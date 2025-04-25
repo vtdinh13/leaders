@@ -55,10 +55,10 @@ with st.sidebar:
         "<h1 style='margin-top: 0rem;'>About</h1>",
         unsafe_allow_html=True)
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("Over 4000 documents from Donald Trump were scraped from [Roll Call](https://rollcall.com/) covering the period from January 2016 to April 2025. The original dataset includes raw speeches and transcriptions of remarks, commentaries, and public messages spoken by Trump. Secondary sources, such as analyses of Trump, as well as short tweets from X and Truth Social were excluded. This means that the dataset compiled reflects what Trump has directly said himself -- straight from the source himself.")
+    st.markdown("Over 4000 documents from Donald Trump were scraped from [Roll Call](https://rollcall.com/) covering the period from January 2016 to April 2025. The original dataset includes raw speeches and transcriptions of remarks, commentaries, and public messages spoken by Trump. Secondary sources, such as analyses of Trump, as well as short tweets from X and Truth Social were excluded. This means that the compiled dataset reflects what Trump has directly said himself -- raw and unfiltered. The final dataset comprised of responses from [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-1.5-flash).")
             
-    st.markdown("The final dataset, comprised of responses from [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-1.5-flash), was employed to conduct analyses." )
-    st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+    # st.markdown("The final dataset, comprised of responses from [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-1.5-flash), was employed to conduct analyses." )
+    st.markdown("<br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
     st.markdown(
             '<h6>Made in &nbsp<img src="https://streamlit.io/images/brand/streamlit-mark-color.png" alt="Streamlit logo" height="16">&nbsp by <a href="https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile">Vancesca Dinh</a></h6>'
             ,unsafe_allow_html=True)
