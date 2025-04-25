@@ -121,6 +121,7 @@ def create_sentiment_pie_chart(df):
         labels=sent_df_sorted["sentiment"].map(map_num_to_sentiment),
         values=sent_df_sorted["proportion"],
         customdata=sent_df_sorted[["count"]],
+        domain=dict(x=[0.15, 0.95], y=[0.45, 0.9]),
         sort=False,
         hole=0.5,
         marker=dict(colors=colors),
@@ -135,11 +136,14 @@ def create_sentiment_pie_chart(df):
     # Control the legend position
     pie.update_layout(
         legend=dict(
-            x=0.7,       # horizontal position (0 to 1)
+            x=0.3,       # horizontal position (0 to 1)
             y=0.3,       # vertical position (0 to 1)
             xanchor='left',  # anchor point on the x-axis ('left', 'center', 'right')
             yanchor='top',   # anchor point on the y-axis ('top', 'middle', 'bottom')
-        )
+        ),
+        height=400,
+        width=500,
+        margin=dict(l=5, r=5, t=5, b=5)
     )
 
     return pie
@@ -157,7 +161,7 @@ def custom_color_scheme():
     
 ]
     return colors
-def create_emotions_stacked(df):
+def create_heatmap(df):
 
     # Create subset of original dataframe
     # df_emotion_sentiment = df[["sentiment", "lemmatized_emotions_clean"]].reset_index(drop=True)
@@ -191,41 +195,80 @@ def create_emotions_stacked(df):
     grouped_percent = grouped_top.div(grouped_top.sum(axis=1), axis=0) * 100
     grouped_percent_sorted = grouped_percent[sorted(grouped_percent.columns)]
     grouped_percent_sorted_renamed = grouped_percent_sorted.rename(columns=map_num_to_sentiment)
-
+    grouped_percent_sorted_renamed_T = grouped_percent_sorted_renamed.T
     # Create plot
     # colors = px.colors.sequential.Greens
     # colors = px.colors.sequential.RdBu
     # colors = px.colors.diverging.RdBu[::-1]
     # colors = px.colors.diverging.RdBu
     # colors = sample_colorscale(px.colors.diverging.RdBu, 5)
-    colors = custom_color_scheme()
+    # colors = custom_color_scheme()
 
-    fig = go.Figure()
+    # fig = go.Figure()
 
-    for i, sentiment in enumerate(grouped_percent_sorted_renamed.columns):
-        fig.add_trace(go.Bar(
-            x=grouped_percent_sorted_renamed.index,
-            y=grouped_percent_sorted_renamed[sentiment],
-            name=sentiment,
-            marker_color=colors[i % len(colors)]
-            # customdata=grouped_percent_sorted[[sentiment]].to_numpy(),  # <-- pass raw counts as customdata
-            # hovertemplate='%{y:.0f}% (%{customdata[0]} counts)<extra>%{fullData.name}</extra>'
-        ))
+    # for i, sentiment in enumerate(grouped_percent_sorted_renamed.columns):
+    #     fig.add_trace(go.Bar(
+    #         x=grouped_percent_sorted_renamed.index,
+    #         y=grouped_percent_sorted_renamed[sentiment],
+    #         name=sentiment,
+    #         marker_color=colors[i % len(colors)]
+    #         # customdata=grouped_percent_sorted[[sentiment]].to_numpy(),  # <-- pass raw counts as customdata
+    #         # hovertemplate='%{y:.0f}% (%{customdata[0]} counts)<extra>%{fullData.name}</extra>'
+    #     ))
   
    
-    # Customize layout
+    # # Customize layout
+    # fig.update_layout(
+    #     barmode='stack',
+    #     title='Top 20 Emotions by Total Sentiment Mentions',
+    #     xaxis_title='Affect Categories',
+    #     yaxis_title='Percent',
+    #     xaxis_tickangle=-45
+    # )
+    # fig.update_layout(
+    #     legend=dict(
+    #         title="Sentiments by Gemini 1.5 Flash",
+    #         orientation="v",   # vertical
+    #         traceorder="normal"  # or "reversed" to flip
+    #     )
+    # )
+
+    fig = px.imshow(
+    grouped_percent_sorted_renamed.T,
+    text_auto='.0f',
+    # text_auto=False,
+    labels=dict(x="Associated Emotion", y="Sentiment", color="Percentage"),
+    # labels = dict(x="Sentiment", y="Associated Emotion", color="Percentage"),
+    # title="Sentiment vs Emotion Cluster (%)",
+    color_continuous_scale="Greens"
+)
+    fig.update_layout(height=350, width=600, xaxis_title_font=dict(size=18, family='Arial', color='black'),  # bold via default font weight
+        yaxis_title_font=dict(size=18, family='Arial', color='black'),
+        xaxis=dict(
+            tickfont=dict(size=14, family='Arial', color='black')
+        ),
+        yaxis=dict(
+            tickfont=dict(size=14, family='Arial', color='black')
+        ),
+        # title={
+        #     'text': "Sentiment Analysis of DJT Documents",
+        #     'font': {
+        #         'size': 24,          # font size
+        #         'family': 'Arial',   # font family
+        #         'color': 'black'  # font color
+        #     },
+        #     'x': 0.5,                # center title
+        #     'xanchor': 'center'
+        # },
+        margin=dict(l=10, r=10, t=10, b=10))
+    # Update colorbar (legend) to be horizontal
     fig.update_layout(
-        barmode='stack',
-        title='Top 20 Emotions by Total Sentiment Mentions',
-        xaxis_title='Affect Categories',
-        yaxis_title='Percent',
-        xaxis_tickangle=-45
-    )
-    fig.update_layout(
-        legend=dict(
-            title="Sentiments by Gemini 1.5 Flash",
-            orientation="v",   # vertical
-            traceorder="normal"  # or "reversed" to flip
+        coloraxis_colorbar=dict(
+            orientation='v',      # horizontal
+            x=1.1,                # center the colorbar
+            xanchor='center',
+            y=.53,               # adjust vertical position if needed
+            title='Percentage'     # optional label
         )
     )
 
@@ -256,22 +299,50 @@ def create_wordcloud(df):
 ################################
 # Main dashbaord
 ################################
+
+# # Set background color with HTML + CSS
+# st.markdown(
+#     """
+#     <style>
+#     body {
+#         background-color: #eaeded;  /* Light blue background */
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
+st.markdown(
+    """
+    <style>
+    /* Main page background */
+   .stApp {
+    background-color: #f4f6f6;
+}
+[data-testid="stSidebar"] {
+    background-color: #d4efdf;
+}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 row0 = st.columns((.4, 1, 1, 1, .4), gap="medium")
 with row0[1]:
     if not filtered_df.empty:
         num_doc = len(filtered_df)
         st.markdown(f"""
             <div style="
-                width: 180px;
+                width: 190px;
                 height: 150px;
-                border: 2px solid #ddd;
+                border: .5px solid #ddd;
                 border-radius: 12px;
-                padding:4px;
+                padding:2px;
                 background-color: #f9f9f9;
                 display: inline-block;
                 vertical-align: top;
                 text-align: center;
-                margin: 10px;">
+                margin: 15px;">
                 <h4 style="margin: 0;">No. of Documents</h4>
                 <p style="font-size: 44px; margin: 0;"><strong>{num_doc}</strong></p>
             </div>
@@ -282,16 +353,16 @@ with row0[2]:
         max_doc = filtered_df["text_word_count"].max()
         st.markdown(f"""
             <div style="
-                width: 180px;
+                width: 190px;
                 height: 150px;
-                border: 2px solid #ddd;
+                border: .5px solid #ddd;
                 border-radius: 12px;
-                padding:4px;
+                padding:2px;
                 background-color: #f9f9f9;
                 display: inline-block;
                 vertical-align: top;
                 text-align: center;
-                margin: 10px;">
+                margin: 15px;">
                 <h4 style="margin: 0px auto;">Most No. of Words</h4>
                 <p style="font-size: 44px; margin: 0;"><strong>{max_doc}</strong></p>
             </div>
@@ -303,16 +374,16 @@ with row0[3]:
         min_doc = filtered_df["text_word_count"].min()
         st.markdown(f"""
             <div style="
-                width: 180px;
+                width: 190px;
                 height: 150px;
-                border: 2px solid #ddd;
+                border: .5px solid #ddd;
                 border-radius: 12px;
-                padding:4px;
+                padding:2px;
                 background-color: #f9f9f9;
                 display: inline-block;
                 vertical-align: top;
                 text-align: center;
-                margin: 10px;">
+                margin: 15px;">
                 <h4 style="margin: 0;">Least No. of Words</h4>
                 <p style="font-size: 44px; margin: 0;"><strong>{min_doc}</strong></p>
             </div>
@@ -323,42 +394,37 @@ with row0[3]:
    
 
 
-row1 = st.columns((1.2, 2), gap='medium')
+row1 = st.columns((1))
 
 with row1[0]:
-    st.subheader("Intended Purpose of Documents")
-    st.markdown("Gemini's response to the summary of a given document and the purpose that it serves.")   
-    if not filtered_df.empty:
-        intent_df = filtered_df[["date", "sentiment", "intent"]]
-        intent_df = intent_df[~intent_df["intent"].isna()]
-        intent_df.loc[:, "sentiment"] = intent_df.loc[:,"sentiment"].map(intent_mapping)
-        intent_df.columns = ["Date", "Sentiment", "Summary and Intended Purpose of Document"]
-        intent_df.index = intent_df["Date"]
-        intent_df = intent_df.drop("Date", axis=1)
-        st.dataframe(intent_df)    
-# with col[1]:
-#     st.subheader("Sentiment Pie Chart")
-#     # st.write("This pie chart shows the distribution of sentiments in the selected date range with data based on documents with Trump as the primary speaker.")
-
-#     if not filtered_df.empty:
-#         pie = create_sentiment_pie_chart(filtered_df)   
-#         st.plotly_chart(pie, use_container_width=True)
-#     else:
-#         st.write("No data available for the selected date range.")
-#         st.write("Please select a different date range.")
-
-with row1[1]:
     # st.subheader("Top 20 Emotions by Total Sentiment Mentions")
     # st.write("This stacked bar chart shows the top 20 emotions by total sentiment mentions in the selected date range with data based on documents with Trump as the primary speaker.")
     if not filtered_df.empty:
-        stacked = create_emotions_stacked(filtered_df)
-        st.plotly_chart(stacked, use_container_width=True)
+        hm = create_heatmap(filtered_df)
+        st.plotly_chart(hm, use_container_width=True)
     else:
         st.write("No data available for the selected date range.")
         st.write("Please select a different date range.")
 
+# with row1[1]:
+#     st.subheader("Intended Purpose of Documents")
+#     st.markdown("Gemini's response to the summary of a given document and the purpose that it serves.")   
+#     if not filtered_df.empty:
+#         intent_df = filtered_df[["date", "sentiment", "intent"]]
+#         intent_df = intent_df[~intent_df["intent"].isna()]
+#         intent_df.loc[:, "sentiment"] = intent_df.loc[:,"sentiment"].map(intent_mapping)
+#         intent_df.columns = ["Date", "Sentiment", "Summary and Intended Purpose of Document"]
+#         intent_df.index = intent_df["Date"]
+#         intent_df = intent_df.drop("Date", axis=1)
+#         st.dataframe(intent_df)    
 
-row2 = st.columns((1.2,2))
+
+
+
+
+
+
+row2 = st.columns((1.6,1))
 with row2[0]:    
     if not filtered_df.empty:
         st.subheader("Named-Entity Recognition (NER) Extraction")
