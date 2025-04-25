@@ -32,9 +32,7 @@ from sentence_transformers import SentenceTransformer
 #######################################
 st.set_page_config(
     page_title="Trump Sentiment Analysis",
-    # page_icon=":bar_chart:",
-    layout="wide",
-    # initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 ######################################
@@ -46,48 +44,43 @@ def load_data():
     df = pd.read_parquet('./1_data_collection/trump_second_term_v2.parquet')
     return df
 df = load_data()
+df["text_word_count"] = df["text"].str.split().apply(len)
 
 ########################################
 # Side bar
 ########################################
 with st.sidebar: 
-    st.markdown(
-        "<h1 style='margin-top: 0rem;'>About</h1>",
-        unsafe_allow_html=True)
+    with st.expander("Dataset Information", expanded=True):
+        st.markdown("# Dataset")
+    # st.markdown(
+    #     "<h1 style='margin-top: 0rem;'>About</h1>",
+    #     unsafe_allow_html=True)
+        
+        st.markdown("Over 4000 documents from Donald Trump were scraped from [Roll Call](https://rollcall.com/) covering the period from January 2016 to April 2025. The original dataset includes raw speeches and transcriptions of remarks, commentaries, and public messages spoken by Trump. Secondary sources, such as analyses of Trump, as well as short tweets from X and Truth Social were excluded. This means that the compiled dataset reflects what Trump has directly said himself -- raw and unfiltered. The final dataset comprised of responses from [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-1.5-flash).")
+
+    # st.title("Date filter")
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+
+    date_range = (df["date"].min(), df["date"].max())
+
     st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("Over 4000 documents from Donald Trump were scraped from [Roll Call](https://rollcall.com/) covering the period from January 2016 to April 2025. The original dataset includes raw speeches and transcriptions of remarks, commentaries, and public messages spoken by Trump. Secondary sources, such as analyses of Trump, as well as short tweets from X and Truth Social were excluded. This means that the compiled dataset reflects what Trump has directly said himself -- raw and unfiltered. The final dataset comprised of responses from [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-1.5-flash).")
-            
+    st.markdown("#### Given that insights are based on a particular timeframe, please select the desired date range below:")
+    start_date, end_date = st.slider("",
+        value=date_range,
+        min_value=date_range[0],
+        max_value=date_range[1],
+        format="YYYY-MM-DD"
+    )
+
+    # Filter DataFrame based on selected range
+    mask = (df['date'] >= start_date) & (df['date'] <= end_date)
+    filtered_df = df.loc[mask]
+
     # st.markdown("The final dataset, comprised of responses from [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-1.5-flash), was employed to conduct analyses." )
-    st.markdown("<br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
             '<h6>Made in &nbsp<img src="https://streamlit.io/images/brand/streamlit-mark-color.png" alt="Streamlit logo" height="16">&nbsp by <a href="https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile">Vancesca Dinh</a></h6>'
             ,unsafe_allow_html=True)
-
-
-########################################
-# Date slider 
-
-# st.title("Date filter")
-df["date"] = pd.to_datetime(df["date"]).dt.date
-
-date_range = (df["date"].min(), df["date"].max())
-start_date, end_date = st.slider(
-    "Select a date range",
-    value=date_range,
-    min_value=date_range[0],
-    max_value=date_range[1],
-    format="YYYY-MM-DD"
-)
-# st.write("Selected date range:", df["date"].min(), "to", df["date"].max())
-# st.write("Selected date range:", x)
-
-# Filter DataFrame based on selected range
-mask = (df['date'] >= start_date) & (df['date'] <= end_date)
-filtered_df = df.loc[mask]
-########################################
-
-
-
 
 
 ##############################
@@ -134,10 +127,21 @@ def create_sentiment_pie_chart(df):
         hovertemplate='<b>%{label}</b><br>Count: %{customdata[0]}<br>Percent: %{percent}<extra></extra>'
     )])
 
-    # pie.update_layout(
-    #     legend_title_text='Sentiments by Gemini 1.5 Flash')
+    pie.update_layout(
+        legend_title_text='Sentiments by Gemini 1.5 Flash')
 
-    pie.update_layout(showlegend=False)
+    pie.update_layout(showlegend=True)
+
+    # Control the legend position
+    pie.update_layout(
+        legend=dict(
+            x=0.7,       # horizontal position (0 to 1)
+            y=0.3,       # vertical position (0 to 1)
+            xanchor='left',  # anchor point on the x-axis ('left', 'center', 'right')
+            yanchor='top',   # anchor point on the y-axis ('top', 'middle', 'bottom')
+        )
+    )
+
     return pie
 
 # def sample_colorscale(colorscale, n):
@@ -252,17 +256,86 @@ def create_wordcloud(df):
 ################################
 # Main dashbaord
 ################################
-top_row = st.columns((3, 2), gap='medium')
+row0 = st.columns((.4, 1, 1, 1, .4), gap="medium")
+with row0[1]:
+    if not filtered_df.empty:
+        num_doc = len(filtered_df)
+        st.markdown(f"""
+            <div style="
+                width: 180px;
+                height: 150px;
+                border: 2px solid #ddd;
+                border-radius: 12px;
+                padding:4px;
+                background-color: #f9f9f9;
+                display: inline-block;
+                vertical-align: top;
+                text-align: center;
+                margin: 10px;">
+                <h4 style="margin: 0;">No. of Documents</h4>
+                <p style="font-size: 44px; margin: 0;"><strong>{num_doc}</strong></p>
+            </div>
+        """, unsafe_allow_html=True)
 
-with top_row[0]:
+with row0[2]:
+    if not filtered_df.empty:
+        max_doc = filtered_df["text_word_count"].max()
+        st.markdown(f"""
+            <div style="
+                width: 180px;
+                height: 150px;
+                border: 2px solid #ddd;
+                border-radius: 12px;
+                padding:4px;
+                background-color: #f9f9f9;
+                display: inline-block;
+                vertical-align: top;
+                text-align: center;
+                margin: 10px;">
+                <h4 style="margin: 0px auto;">Most No. of Words</h4>
+                <p style="font-size: 44px; margin: 0;"><strong>{max_doc}</strong></p>
+            </div>
+        """, unsafe_allow_html=True)
+
+
+with row0[3]:
+    if not filtered_df.empty:
+        min_doc = filtered_df["text_word_count"].min()
+        st.markdown(f"""
+            <div style="
+                width: 180px;
+                height: 150px;
+                border: 2px solid #ddd;
+                border-radius: 12px;
+                padding:4px;
+                background-color: #f9f9f9;
+                display: inline-block;
+                vertical-align: top;
+                text-align: center;
+                margin: 10px;">
+                <h4 style="margin: 0;">Least No. of Words</h4>
+                <p style="font-size: 44px; margin: 0;"><strong>{min_doc}</strong></p>
+            </div>
+        """, unsafe_allow_html=True)
+
+
+# with row0[3]:
+   
+
+
+row1 = st.columns((1.2, 2), gap='medium')
+
+with row1[0]:
     st.subheader("Intended Purpose of Documents")
-    st.markdown("Provides Gemini's response to the summary of a given document and the purpose that it serves.")   
+    st.markdown("Gemini's response to the summary of a given document and the purpose that it serves.")   
     if not filtered_df.empty:
         intent_df = filtered_df[["date", "sentiment", "intent"]]
         intent_df = intent_df[~intent_df["intent"].isna()]
         intent_df.loc[:, "sentiment"] = intent_df.loc[:,"sentiment"].map(intent_mapping)
         intent_df.columns = ["Date", "Sentiment", "Summary and Intended Purpose of Document"]
-        st.dataframe(intent_df.reset_index(drop=True))    
+        intent_df.index = intent_df["Date"]
+        intent_df = intent_df.drop("Date", axis=1)
+        st.dataframe(intent_df)    
 # with col[1]:
 #     st.subheader("Sentiment Pie Chart")
 #     # st.write("This pie chart shows the distribution of sentiments in the selected date range with data based on documents with Trump as the primary speaker.")
@@ -274,7 +347,7 @@ with top_row[0]:
 #         st.write("No data available for the selected date range.")
 #         st.write("Please select a different date range.")
 
-with top_row[1]:
+with row1[1]:
     # st.subheader("Top 20 Emotions by Total Sentiment Mentions")
     # st.write("This stacked bar chart shows the top 20 emotions by total sentiment mentions in the selected date range with data based on documents with Trump as the primary speaker.")
     if not filtered_df.empty:
@@ -285,20 +358,17 @@ with top_row[1]:
         st.write("Please select a different date range.")
 
 
-bottom_row = st.columns((3,2))
-with bottom_row[0]:    
+row2 = st.columns((1.2,2))
+with row2[0]:    
     if not filtered_df.empty:
+        st.subheader("Named-Entity Recognition (NER) Extraction")
         cloud = create_wordcloud(filtered_df)
         st.pyplot(cloud)
 
-with bottom_row[1]:
-# st.subheader("Sentiment Pie Chart")
-# st.write("This pie chart shows the distribution of sentiments in the selected date range with data based on documents with Trump as the primary speaker.")
-
+with row2[1]:
+    st.subheader("Sentiment Distribution")
     if not filtered_df.empty:
         pie = create_sentiment_pie_chart(filtered_df)   
         st.plotly_chart(pie, use_container_width=True)
-    else:
-        st.write("No data available for the selected date range.")
-        st.write("Please select a different date range.")
 
+   
