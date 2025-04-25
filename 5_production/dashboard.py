@@ -50,15 +50,18 @@ df = load_data()
 ########################################
 # Side bar
 ########################################
-with st.sidebar:
-    # with st.expander("About", expanded = True):
-    st.title("About")
-    st.write("""
-            - Data was scraped from [Rollcall](https://rollcall.com/).
-             """)
-    
-
-
+with st.sidebar: 
+    st.markdown(
+        "<h1 style='margin-top: 0rem;'>About</h1>",
+        unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("Over 4000 documents from Donald Trump were scraped from [Roll Call](https://rollcall.com/) covering the period from January 2016 to April 2025. The original dataset includes raw speeches and transcriptions of remarks, commentaries, and public messages spoken by Trump. Secondary sources, such as analyses of Trump, were excluded. This means that the dataset compiled reflects what Trump has directly said himself -- straight from the source. The dataset does not include short tweets from X or Truth Social.")
+            
+    st.markdown("The final dataset, comprised of responses from [Gemini 1.5 Flash](https://ai.google.dev/gemini-api/docs/models#gemini-1.5-flash), was employed to conduct analyses." )
+    st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+    st.markdown(
+            '<h6>Made in &nbsp<img src="https://streamlit.io/images/brand/streamlit-mark-color.png" alt="Streamlit logo" height="16">&nbsp by <a href="https://www.linkedin.com/public-profile/settings?trk=d_flagship3_profile_self_view_public_profile">Vancesca Dinh</a></h6>'
+            ,unsafe_allow_html=True)
 
 
 ########################################
@@ -130,24 +133,27 @@ def create_sentiment_pie_chart(df):
     )])
 
     # pie.update_layout(
-    #     legend_title_text='Sentiments by Vertex AI')
+    #     legend_title_text='Sentiments by Gemini 1.5 Flash')
 
     pie.update_layout(showlegend=False)
     return pie
 
+# def sample_colorscale(colorscale, n):
+#     return [colorscale[int(i)] for i in np.linspace(0, len(colorscale) - 1, n)]
+
 def create_emotions_stacked(df):
 
     # Create subset of original dataframe
-    df_emotion_sentiment = df[["sentiment", "lemmatized_emotions_clean"]].reset_index(drop=True)
+    # df_emotion_sentiment = df[["sentiment", "lemmatized_emotions_clean"]].reset_index(drop=True)
 
     # Create emotions matrix
     mlb = MultiLabelBinarizer()
-    emotions_matrix = pd.DataFrame(mlb.fit_transform(df_emotion_sentiment["lemmatized_emotions_clean"]), columns=mlb.classes_)
+    emotions_matrix = pd.DataFrame(mlb.fit_transform(df["lemmatized_emotions_clean"]), columns=mlb.classes_)
     emotions_matrix = emotions_matrix.reset_index(drop=True)
 
 
     # Create sentiment-emotion crosstab
-    e_s_merged = pd.concat([df_emotion_sentiment["sentiment"], emotions_matrix], axis=1).reset_index(drop=True)
+    e_s_merged = pd.concat([df["sentiment"], emotions_matrix], axis=1).reset_index(drop=True)
 
     df_long = e_s_merged.melt(id_vars="sentiment", value_vars=emotions_matrix.columns, 
                               var_name="emotion", value_name="present")
@@ -168,10 +174,23 @@ def create_emotions_stacked(df):
 
     grouped_percent = grouped_top.div(grouped_top.sum(axis=1), axis=0) * 100
     grouped_percent_sorted = grouped_percent[sorted(grouped_percent.columns)]
-    
     grouped_percent_sorted_renamed = grouped_percent_sorted.rename(columns=map_num_to_sentiment)
+
+    # Create plot
+    # colors = px.colors.sequential.Greens
+    # colors = px.colors.sequential.RdBu
+    # colors = px.colors.diverging.RdBu[::-1]
+    # colors = px.colors.diverging.RdBu
+    # colors = sample_colorscale(px.colors.diverging.RdBu, 5)
+    colors = [
+    "#1d8348",  
+    "#27ae60",  
+    "#fdebd0",  
+    "#3498db",  
+    "#2874a6",  
     
-    # Create a stacked bar chart
+]
+
     fig = go.Figure()
 
     for i, sentiment in enumerate(grouped_percent_sorted_renamed.columns):
@@ -179,26 +198,28 @@ def create_emotions_stacked(df):
             x=grouped_percent_sorted_renamed.index,
             y=grouped_percent_sorted_renamed[sentiment],
             name=sentiment,
-            # marker_color=colors[i % len(colors)],
-            customdata=grouped_percent_sorted_renamed[[sentiment]].to_numpy(),  # <-- pass raw counts as customdata
-            hovertemplate='%{y:.0f}% (%{customdata[0]} counts)<extra>%{fullData.name}</extra>'
+            marker_color=colors[i % len(colors)]
+            # customdata=grouped_percent_sorted[[sentiment]].to_numpy(),  # <-- pass raw counts as customdata
+            # hovertemplate='%{y:.0f}% (%{customdata[0]} counts)<extra>%{fullData.name}</extra>'
         ))
-
+  
+   
     # Customize layout
     fig.update_layout(
         barmode='stack',
         title='Top 20 Emotions by Total Sentiment Mentions',
         xaxis_title='Affect Categories',
         yaxis_title='Percent',
-        xaxis_tickangle=-45,
+        xaxis_tickangle=-45
     )
     fig.update_layout(
         legend=dict(
-            title="Sentiments by Vertex AI",
+            title="Sentiments by Gemini 1.5 Flash",
             orientation="v",   # vertical
             traceorder="normal"  # or "reversed" to flip
         )
     )
+
     return fig
 
 def create_wordcloud(df):
@@ -229,10 +250,13 @@ def create_wordcloud(df):
 top_row = st.columns((3, 2), gap='medium')
 
 with top_row[0]:
-    st.subheader("This is for a display of intent.")   
+    st.subheader("Intended Purpose of Documents")
+    st.markdown("Provides Gemini's response to the summary of a given document and the purpose that it serves.")   
     if not filtered_df.empty:
-        intent_df = filtered_df[["sentiment", "intent"]]
+        intent_df = filtered_df[["date", "sentiment", "intent"]]
+        intent_df = intent_df[~intent_df["intent"].isna()]
         intent_df.loc[:, "sentiment"] = intent_df.loc[:,"sentiment"].map(intent_mapping)
+        intent_df.columns = ["Date", "Sentiment", "Summary and Intended Purpose of Document"]
         st.dataframe(intent_df.reset_index(drop=True))    
 # with col[1]:
 #     st.subheader("Sentiment Pie Chart")
