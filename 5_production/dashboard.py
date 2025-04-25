@@ -123,12 +123,14 @@ def create_sentiment_pie_chart(df):
     sent_df["sentiment"]= sent_df["sentiment"].map(sentiment_map)
     sent_df["proportion"] = sent_df["count"].transform(lambda x:x/x.sum()).round(2)
     sent_df_sorted = sent_df.sort_values("sentiment")
-
+    colors = custom_color_scheme()
     pie = go.Figure(data=[go.Pie(
         labels=sent_df_sorted["sentiment"].map(map_num_to_sentiment),
         values=sent_df_sorted["proportion"],
         customdata=sent_df_sorted[["count"]],
         sort=False,
+        hole=0.5,
+        marker=dict(colors=colors),
         hovertemplate='<b>%{label}</b><br>Count: %{customdata[0]}<br>Percent: %{percent}<extra></extra>'
     )])
 
@@ -141,6 +143,16 @@ def create_sentiment_pie_chart(df):
 # def sample_colorscale(colorscale, n):
 #     return [colorscale[int(i)] for i in np.linspace(0, len(colorscale) - 1, n)]
 
+def custom_color_scheme():
+    colors = [
+    "#1d8348",  
+    "#27ae60",  
+    "#fdebd0",  
+    "#3498db",  
+    "#2874a6",  
+    
+]
+    return colors
 def create_emotions_stacked(df):
 
     # Create subset of original dataframe
@@ -182,14 +194,7 @@ def create_emotions_stacked(df):
     # colors = px.colors.diverging.RdBu[::-1]
     # colors = px.colors.diverging.RdBu
     # colors = sample_colorscale(px.colors.diverging.RdBu, 5)
-    colors = [
-    "#1d8348",  
-    "#27ae60",  
-    "#fdebd0",  
-    "#3498db",  
-    "#2874a6",  
-    
-]
+    colors = custom_color_scheme()
 
     fig = go.Figure()
 
